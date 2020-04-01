@@ -371,8 +371,8 @@ void SystemInit (void) {
   /* Setup the vector table address. */
   irqNesting = 0;
 
-  __ASM volatile("csrw 0x305, %0" :: "r"((uint32_t)__VECTOR_TABLE)); /* MTVEC */
-  __ASM volatile("csrw 0x005, %0" :: "r"((uint32_t)__VECTOR_TABLE)); /* UTVEC */
+  __ASM volatile("csrw 0x305, %0" :: "r"((uint64_t)__VECTOR_TABLE)); /* MTVEC */
+  __ASM volatile("csrw 0x005, %0" :: "r"((uint64_t)__VECTOR_TABLE)); /* UTVEC */
 
   /* Clear all pending flags. */
   EVENT_UNIT->INTPTPENDCLEAR = 0xFFFFFFFF;

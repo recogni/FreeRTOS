@@ -13105,7 +13105,8 @@ typedef struct {
 
 /* LPUART - Peripheral instance base addresses */
 /** Peripheral LPUART0 base address */
-#define LPUART0_BASE                             (0x40042000u)
+//#define LPUART0_BASE                             (0x40042000u)
+#define LPUART0_BASE                               (0x10000000u)
 /** Peripheral LPUART0 base pointer */
 #define LPUART0                                  ((LPUART_Type *)LPUART0_BASE)
 /** Peripheral LPUART1 base address */

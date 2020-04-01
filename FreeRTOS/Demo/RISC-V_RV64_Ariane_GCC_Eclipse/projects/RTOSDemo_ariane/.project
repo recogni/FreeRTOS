@@ -240,6 +240,16 @@
 			<locationURI>PARENT-2-PROJECT_LOC/common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_debug_console.h</locationURI>
 		</link>
 		<link>
+			<name>common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_log.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_log.c</locationURI>
+		</link>
+		<link>
+			<name>common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_log.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_log.h</locationURI>
+		</link>
+		<link>
 			<name>common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_debug_console_conf.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/common/rv64m1_sdk_riscv/devices/RV64M1/utilities/fsl_debug_console_conf.h</locationURI>
