@@ -86,10 +86,18 @@
  *----------------------------------------------------------*/
 
 /* See https://www.freertos.org/Using-FreeRTOS-on-RISC-V.html */
-#define configMTIME_BASE_ADDRESS 	( 0 )
-#define configMTIMECMP_BASE_ADDRESS ( 0 )
 
+/* https://github.com/pulp-platform/ariane/tree/master/src/clint */
+#define CLINT_BASE_ADDRESS          (0x02000000)
+#define configMTIME_BASE_ADDRESS    ((CLINT_BASE_ADDRESS) + 0xBFF8UL )
+#define configMTIMECMP_BASE_ADDRESS ((CLINT_BASE_ADDRESS) + 0x4000UL )
 
+/* __freertos_irq_stack_top is currently defined in RV64M1_ariane_flash.ld
+ * That needs to be removed before we can swith to using 
+ * #define configISR_STACK_SIZE_WORDS ( XXX )  
+ * type declaration here.
+ * The linker script style (.ld file) is used in tight memory configurations, which is not our case.
+ */
 #define configUSE_PREEMPTION			1
 #define configUSE_IDLE_HOOK				1
 #define configUSE_TICK_HOOK				1

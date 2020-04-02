@@ -37,13 +37,13 @@ MEMORY
 SECTIONS
 {
   /* NOINIT section for rpmsg_sh_mem */
-  .noinit_rpmsg_sh_mem (NOLOAD) : ALIGN(4)
+  .noinit_rpmsg_sh_mem (NOLOAD) : ALIGN(8)
   {
      *(.noinit.$rpmsg_sh_mem*)
-     . = ALIGN(4) ;
+     . = ALIGN(8) ;
   } > rpmsg_sh_mem
 
-  .vectors : ALIGN(4)
+  .vectors : ALIGN(8)
   {
     __VECTOR_TABLE = .;
     KEEP(*(.vectors))
@@ -53,9 +53,9 @@ SECTIONS
   /* The program code and other data goes into internal flash */
   .text :
   {
-    . = ALIGN(4);
+    . = ALIGN(8);
     KEEP(*(.startup))
-    . = ALIGN(4);
+    . = ALIGN(8);
     __user_vector = .;
     KEEP(*(user_vectors))
     *(.text)                 /* .text sections (code) */
@@ -99,7 +99,7 @@ SECTIONS
 
   .data : AT(__DATA_ROM)
   {
-    . = ALIGN(4);
+    . = ALIGN(8);
     __DATA_RAM = .;
     __data_start__ = .;      /* create a global symbol at data start */
     *(.data)                 /* .data sections */
@@ -110,7 +110,7 @@ SECTIONS
 	*(NonCacheable)
     __noncachedata_end__ = .;     /* define a global symbol at ncache data end */
     KEEP(*(.jcr*))
-    . = ALIGN(4);
+    . = ALIGN(8);
     __data_end__ = .;        /* define a global symbol at data end */
   } > m_data
 
@@ -123,7 +123,7 @@ SECTIONS
   .bss :
   {
     /* This is used by the startup in order to initialize the .bss section */
-    . = ALIGN(4);
+    . = ALIGN(8);
     __START_BSS = .;
     __bss_start__ = .;
     *(.bss)
@@ -131,7 +131,7 @@ SECTIONS
     *(.sbss)
     *(.sbss*)
     *(COMMON)
-    . = ALIGN(4);
+    . = ALIGN(8);
     __bss_end__ = .;
     __END_BSS = .;
   } > m_data
