@@ -68,7 +68,7 @@
 
 /* Set mainCREATE_SIMPLE_BLINKY_DEMO_ONLY to one to run the simple blinky demo,
 or 0 to run the more comprehensive test and demo application. */
-#define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY	0
+#define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY	1
 
 /*
  * main_blinky() is used when mainCREATE_SIMPLE_BLINKY_DEMO_ONLY is set to 1.
@@ -232,8 +232,10 @@ HANDLER IS SPECIFIC TO THE VEGA BOARD WHICH DOES NOT INCLUDE A CLINT! */
 void SystemIrqHandler( uint32_t mcause )
 {
 uint32_t ulInterruptNumber;
+#ifdef LATER
 typedef void ( * irq_handler_t )( void );
 extern const irq_handler_t isrTable[];
+#endif
 
 	ulInterruptNumber = mcause & 0x1FUL;
 
@@ -243,7 +245,9 @@ extern const irq_handler_t isrTable[];
 	/* Read back to make sure write finished. */
 	(void)(EVENT_UNIT->INTPTPENDCLEAR);
 
+#ifdef LATER
 	/* Now call the real irq handler for ulInterruptNumber */
 	isrTable[ ulInterruptNumber ]();
+#endif
 }
 

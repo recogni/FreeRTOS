@@ -51,6 +51,7 @@
 
 typedef void (*irq_handler_t)(void);
 
+#ifdef LATER
 extern void DMA0_0_4_8_12_DriverIRQHandler(void);
 extern void DMA0_1_5_9_13_DriverIRQHandler(void);
 extern void DMA0_2_6_10_14_DriverIRQHandler(void);
@@ -142,6 +143,7 @@ extern void INTMUX0_4_IRQHandler(void);
 extern void INTMUX0_5_IRQHandler(void);
 extern void INTMUX0_6_IRQHandler(void);
 extern void INTMUX0_7_IRQHandler(void);
+#endif
 
 /* ----------------------------------------------------------------------------
    -- Core clock
@@ -155,6 +157,7 @@ extern uint32_t __data_end__;
 extern uint32_t __bss_start__;
 extern uint32_t __bss_end__;
 
+#ifdef LATER
 static void copy_section(uint32_t * p_load, uint32_t * p_vma, uint32_t * p_vma_end)
 {
     while(p_vma <= p_vma_end)
@@ -175,12 +178,14 @@ static void zero_section(uint32_t * start, uint32_t * end)
         ++p_zero;
     }
 }
+#endif
 
 #define DEFINE_IRQ_HANDLER(irq_handler, driver_irq_handler) \
     void __attribute__((weak)) irq_handler(void) { driver_irq_handler();}
 
 #define DEFINE_DEFAULT_IRQ_HANDLER(irq_handler) void irq_handler() __attribute__((weak, alias("DefaultIRQHandler")))
 
+#ifdef LATER
 DEFINE_DEFAULT_IRQ_HANDLER(DMA0_0_4_8_12_DriverIRQHandler);
 DEFINE_DEFAULT_IRQ_HANDLER(DMA0_1_5_9_13_DriverIRQHandler);
 DEFINE_DEFAULT_IRQ_HANDLER(DMA0_2_6_10_14_DriverIRQHandler);
@@ -342,15 +347,19 @@ __attribute__((section("user_vectors"))) const irq_handler_t isrTable[] =
 };
 
 extern uint32_t __VECTOR_TABLE[];
+#endif //LATER
+
 
 static uint32_t irqNesting = 0;
 
+#ifdef LATER
 static void DefaultIRQHandler(void)
 {
     for (;;)
     {
     }
 }
+#endif
 
 /* ----------------------------------------------------------------------------
    -- SystemInit()
@@ -365,12 +374,15 @@ void SystemInit (void) {
 
   SystemInitHook();
 
+#ifdef LATER
   copy_section(&__etext, &__data_start__, &__data_end__);
   zero_section(&__bss_start__, &__bss_end__);
+#endif  //LATER
 
   /* Setup the vector table address. */
   irqNesting = 0;
 
+#ifdef LATER
   __ASM volatile("csrw 0x305, %0" :: "r"((uint64_t)__VECTOR_TABLE)); /* MTVEC */
   __ASM volatile("csrw 0x005, %0" :: "r"((uint64_t)__VECTOR_TABLE)); /* UTVEC */
 
@@ -379,6 +391,7 @@ void SystemInit (void) {
   EVENT_UNIT->EVTPENDCLEAR = 0xFFFFFFFF;
   /* Set all interrupt as secure interrupt. */
   EVENT_UNIT->INTPTSECURE = 0xFFFFFFFF;
+#endif
 }
 
 /* ----------------------------------------------------------------------------
@@ -446,8 +459,10 @@ __attribute__((weak)) void SystemIrqHandler(uint32_t mcause) {
 
         __enable_irq();      /* Support nesting interrupt */
 
+#ifdef LATER
         /* Now call the real irq handler for intNum */
         isrTable[intNum]();
+#endif //LATER
 
         __disable_irq();
 

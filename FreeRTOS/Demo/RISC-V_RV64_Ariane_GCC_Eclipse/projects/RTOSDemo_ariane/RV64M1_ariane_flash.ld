@@ -1,165 +1,141 @@
-/*
-** ###################################################################
-**     Processors:          RV64M1_ariane
-**
-**     Compiler:            GNU C Compiler
-**     Abstract:
-**         Linker file for the GNU C Compiler
-**
-**     Copyright 2016 Freescale Semiconductor, Inc.
-**     Copyright 2016-2017 NXP
-**     All rights reserved.
-**     
-**     SPDX-License-Identifier: BSD-3-Clause
-**
-**     http:                 www.nxp.com
-**     mail:                 support@nxp.com
-**
-** ###################################################################
-*/
+/*******************************************************************************
+ * (c) Copyright 2016-2018 Microsemi SoC Products Group.  All rights reserved.
+ *
+ * file name : microsemi-riscv-ram.ld
+ * Mi-V soft processor linker script for creating a SoftConsole downloadable
+ * debug image executing in SRAM.
+ *
+ * This linker script assumes that the SRAM is connected at on the Mi-V soft
+ * processor memory space. The start address and size of the memory space must
+ * be correct as per the Libero design.
+ *
+ * SVN $Revision: 9661 $
+ * SVN $Date: 2018-01-15 16:13:33 +0530 (Mon, 15 Jan 2018) $
+ */
 
-/* Entry Point */
+/* Copied from RISC-V_Renode_Emulator_SoftConsole/microsemi-riscv-renode.ld */
+
 OUTPUT_ARCH( "riscv" )
+ENTRY(_start)
 
-HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x0400;
-STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x0800;
 
-/* Specify the memory areas */
 MEMORY
 {
-  m_vector              (RX)  : ORIGIN = 0x000FFF00, LENGTH = 0x00000100
-  m_text                (RX)  : ORIGIN = 0x00000000, LENGTH = 0x000FFF00
-  m_data                (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00030000 - 0x1800
-  rpmsg_sh_mem          (RW)  : ORIGIN = 0x2002E800, LENGTH = 0x1800
+    ram (rwx) : ORIGIN = 0x80000000, LENGTH = 512k
 }
 
-/* Define output sections */
+RAM_START_ADDRESS   = 0x80000000;       /* Must be the same value MEMORY region ram ORIGIN above. */
+RAM_SIZE            = 512k;              /* Must be the same value MEMORY region ram LENGTH above. */
+STACK_SIZE          = 2k;               /* needs to be calculated for your application */
+HEAP_SIZE           = 4;               /* needs to be calculated for your application */
+
 SECTIONS
 {
-  /* NOINIT section for rpmsg_sh_mem */
-  .noinit_rpmsg_sh_mem (NOLOAD) : ALIGN(8)
+  .text : ALIGN(0x10)
   {
-     *(.noinit.$rpmsg_sh_mem*)
-     . = ALIGN(8) ;
-  } > rpmsg_sh_mem
+    KEEP (*(SORT_NONE(.text.entry)))
+    . = ALIGN(0x10);
+    *(.text .text.* .gnu.linkonce.t.*)
+    *(.plt)
+    . = ALIGN(0x10);
 
-  .vectors : ALIGN(8)
-  {
-    __VECTOR_TABLE = .;
-    KEEP(*(.vectors))
-  } > m_vector
+    KEEP (*crtbegin.o(.ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*crtend.o(.ctors))
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*crtend.o(.dtors))
 
-
-  /* The program code and other data goes into internal flash */
-  .text :
-  {
-    . = ALIGN(8);
-    KEEP(*(.startup))
-    . = ALIGN(8);
-    __user_vector = .;
-    KEEP(*(user_vectors))
-    *(.text)                 /* .text sections (code) */
-    *(.text*)                /* .text* sections (code) */
-    *(.rodata)               /* .rodata sections (constants, strings, etc.) */
-    *(.rodata*)              /* .rodata* sections (constants, strings, etc.) */
-    *(.srodata .srodata.*)
-    *(.glue_7)               /* glue arm to thumb code */
-    *(.glue_7t)              /* glue thumb to arm code */
+    *(.rodata .rodata.* .gnu.linkonce.r.*)
+    *(.gcc_except_table)
+    *(.eh_frame_hdr)
     *(.eh_frame)
-    *(.init)
-    *(.fini)
-  } > m_text
 
-  .preinit_array :
-  {
+    KEEP (*(.init))
+    KEEP (*(.fini))
+
     PROVIDE_HIDDEN (__preinit_array_start = .);
-    KEEP (*(.preinit_array*))
+    KEEP (*(.preinit_array))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } > m_text
-
-  .init_array :
-  {
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
-    KEEP (*(.init_array*))
+    KEEP (*(.init_array))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } > m_text
-
-  .fini_array :
-  {
     PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
-    KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } > m_text
+    . = ALIGN(0x10);
 
-  __etext = .;    /* define a global symbol at end of code */
-  __global_pointer = .;    /* define a global symbol at end of code */
-  __DATA_ROM = .; /* Symbol is used by startup for data initialization */
+  } > ram
 
-  .data : AT(__DATA_ROM)
+  /* short/global data section */
+  .sdata : ALIGN(0x10)
   {
-    . = ALIGN(8);
-    __DATA_RAM = .;
-    __data_start__ = .;      /* create a global symbol at data start */
-    *(.data)                 /* .data sections */
-    *(.data*)                /* .data* sections */
-    *(.sdata .sdata.*)
-    *(.heapsram*)            /* This is only for the pulpino official test code. */
-    __noncachedata_start__ = .;   /* create a global symbol at ncache data start */
-	*(NonCacheable)
-    __noncachedata_end__ = .;     /* define a global symbol at ncache data end */
-    KEEP(*(.jcr*))
-    . = ALIGN(8);
-    __data_end__ = .;        /* define a global symbol at data end */
-  } > m_data
+    __sdata_load = LOADADDR(.sdata);
+    __sdata_start = .;
+    PROVIDE( __global_pointer$ = . + 0x800);
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
+    *(.sdata .sdata.* .gnu.linkonce.s.*)
+    . = ALIGN(0x10);
+    __sdata_end = .;
+  } > ram
 
-  __DATA_END = __DATA_ROM + (__data_end__ - __data_start__);
-  text_end = ORIGIN(m_text) + LENGTH(m_text);
-  ASSERT(__DATA_END <= text_end, "region m_text overflowed with text and data")
-
-  _edata = .;
-  /* Uninitialized data section */
-  .bss :
+  /* data section */
+  .data : ALIGN(0x10)
   {
-    /* This is used by the startup in order to initialize the .bss section */
-    . = ALIGN(8);
-    __START_BSS = .;
-    __bss_start__ = .;
-    *(.bss)
-    *(.bss*)
-    *(.sbss)
-    *(.sbss*)
+    __data_load = LOADADDR(.data);
+    __data_start = .;
+    *(.got.plt) *(.got)
+    *(.shdata)
+    *(.data .data.* .gnu.linkonce.d.*)
+    . = ALIGN(0x10);
+    __data_end = .;
+  } > ram
+
+  /* sbss section */
+  .sbss : ALIGN(0x10)
+  {
+    __sbss_start = .;
+    *(.sbss .sbss.* .gnu.linkonce.sb.*)
+    *(.scommon)
+    . = ALIGN(0x10);
+    __sbss_end = .;
+  } > ram
+
+  /* sbss section */
+  .bss : ALIGN(0x10)
+  {
+    __bss_start = .;
+    *(.shbss)
+    *(.bss .bss.* .gnu.linkonce.b.*)
     *(COMMON)
-    . = ALIGN(8);
-    __bss_end__ = .;
-    __END_BSS = .;
-  } > m_data
+    . = ALIGN(0x10);
+    __bss_end = .;
+  } > ram
 
-  /* End of uninitalized data segement */
+  /* End of uninitialized data segment */
   _end = .;
-  PROVIDE(end = .);
 
-  .heap :
+  .heap : ALIGN(0x10)
   {
-    . = ALIGN(8);
     __heap_start = .;
     . += HEAP_SIZE;
     __heap_end = .;
+    . = ALIGN(0x10);
     _heap_end = __heap_end;
-  } > m_data
+  } > ram
 
-  .stack :
+  .stack : ALIGN(0x10)
   {
-    . = ALIGN(8);
-    __StackLimit = .;
+    __stack_bottom = .;
     . += STACK_SIZE;
-    __StackTop = .;
-    __freertos_irq_stack_top = .;
-  } > m_data
-
-
-  /* Initializes stack on the end of block */
-  PROVIDE(__stack = __StackTop);
+    __stack_top = .;
+    _sp = .;
+	__freertos_irq_stack_top = .;
+  } > ram
 }
 
