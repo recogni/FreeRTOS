@@ -151,13 +151,21 @@ extern void INTMUX0_7_IRQHandler(void);
 uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
 
 extern uint32_t __etext;
-extern uint32_t __data_start__;
-extern uint32_t __data_end__;
+extern uint32_t __data_load;
+extern uint32_t __data_start;
+extern uint32_t __data_end;
 
-extern uint32_t __bss_start__;
-extern uint32_t __bss_end__;
+extern uint32_t __bss_start;
+extern uint32_t __bss_end;
 
-#ifdef LATER
+extern uint32_t __sdata_load;
+extern uint32_t __sdata_start;
+extern uint32_t __sdata_end;
+
+extern uint32_t __sbss_start;
+extern uint32_t __sbss_end;
+
+//#ifdef LATER
 static void copy_section(uint32_t * p_load, uint32_t * p_vma, uint32_t * p_vma_end)
 {
     while(p_vma <= p_vma_end)
@@ -178,7 +186,7 @@ static void zero_section(uint32_t * start, uint32_t * end)
         ++p_zero;
     }
 }
-#endif
+//#endif
 
 #define DEFINE_IRQ_HANDLER(irq_handler, driver_irq_handler) \
     void __attribute__((weak)) irq_handler(void) { driver_irq_handler();}
@@ -186,162 +194,11 @@ static void zero_section(uint32_t * start, uint32_t * end)
 #define DEFINE_DEFAULT_IRQ_HANDLER(irq_handler) void irq_handler() __attribute__((weak, alias("DefaultIRQHandler")))
 
 #ifdef LATER
-DEFINE_DEFAULT_IRQ_HANDLER(DMA0_0_4_8_12_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(DMA0_1_5_9_13_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(DMA0_2_6_10_14_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(DMA0_3_7_11_15_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(DMA0_Error_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(CMC0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(EWM_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(FTFE_Command_Complete_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(FTFE_Read_Collision_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LLWU0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(MUA_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(SPM_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(WDOG0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(SCG_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPIT0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(RTC_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPTMR0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPTMR1_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(TPM0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(TPM1_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(TPM2_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(EMVSIM0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(FLEXIO0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPI2C0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPI2C1_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPI2C2_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(I2S0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(USDHC0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPSPI0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPSPI1_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPSPI2_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPUART0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPUART1_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPUART2_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(USB0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(PORTA_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(PORTB_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(PORTC_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(PORTD_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(ADC0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPCMP0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPDAC0_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(CAU3_Task_Complete_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(CAU3_Security_Violation_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(TRNG_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPIT1_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPTMR2_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(TPM3_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPI2C3_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPSPI3_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPUART3_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(PORTE_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(LPCMP1_IRQHandler);
 DEFINE_DEFAULT_IRQ_HANDLER(RF0_0_IRQHandler);
 DEFINE_DEFAULT_IRQ_HANDLER(RF0_1_IRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_0_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_1_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_2_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_3_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_4_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_5_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_6_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_7_DriverIRQHandler);
-DEFINE_DEFAULT_IRQ_HANDLER(INTMUX0_8_DriverIRQHandler);
-
-DEFINE_IRQ_HANDLER(DMA0_0_4_8_12_IRQHandler, DMA0_0_4_8_12_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(DMA0_1_5_9_13_IRQHandler, DMA0_1_5_9_13_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(DMA0_2_6_10_14_IRQHandler, DMA0_2_6_10_14_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(DMA0_3_7_11_15_IRQHandler, DMA0_3_7_11_15_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(FLEXIO0_IRQHandler, FLEXIO0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPI2C0_IRQHandler, LPI2C0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPI2C1_IRQHandler, LPI2C1_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPI2C2_IRQHandler, LPI2C2_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(I2S0_IRQHandler, I2S0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(USDHC0_IRQHandler, USDHC0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPSPI0_IRQHandler, LPSPI0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPSPI1_IRQHandler, LPSPI1_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPSPI2_IRQHandler, LPSPI2_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPUART0_IRQHandler, LPUART0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPUART1_IRQHandler, LPUART1_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPUART2_IRQHandler, LPUART2_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPI2C3_IRQHandler, LPI2C3_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPSPI3_IRQHandler, LPSPI3_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(LPUART3_IRQHandler, LPUART3_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_0_IRQHandler, INTMUX0_0_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_1_IRQHandler, INTMUX0_1_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_2_IRQHandler, INTMUX0_2_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_3_IRQHandler, INTMUX0_3_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_4_IRQHandler, INTMUX0_4_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_5_IRQHandler, INTMUX0_5_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_6_IRQHandler, INTMUX0_6_DriverIRQHandler);
-DEFINE_IRQ_HANDLER(INTMUX0_7_IRQHandler, INTMUX0_7_DriverIRQHandler);
 
 __attribute__((section("user_vectors"))) const irq_handler_t isrTable[] =
 {
-    DMA0_0_4_8_12_IRQHandler,
-    DMA0_1_5_9_13_IRQHandler,
-    DMA0_2_6_10_14_IRQHandler,
-    DMA0_3_7_11_15_IRQHandler,
-    DMA0_Error_IRQHandler,
-    CMC0_IRQHandler,
-    MUA_IRQHandler,
-    USB0_IRQHandler,
-    USDHC0_IRQHandler,
-    I2S0_IRQHandler,
-    FLEXIO0_IRQHandler,
-    EMVSIM0_IRQHandler,
-    LPIT0_IRQHandler,
-    LPSPI0_IRQHandler,
-    LPSPI1_IRQHandler,
-    LPI2C0_IRQHandler,
-    LPI2C1_IRQHandler,
-    LPUART0_IRQHandler,
-    PORTA_IRQHandler,
-    TPM0_IRQHandler,
-    LPDAC0_IRQHandler,
-    ADC0_IRQHandler,
-    LPCMP0_IRQHandler,
-    RTC_IRQHandler,
-    INTMUX0_0_IRQHandler,
-    INTMUX0_1_IRQHandler,
-    INTMUX0_2_IRQHandler,
-    INTMUX0_3_IRQHandler,
-    INTMUX0_4_IRQHandler,
-    INTMUX0_5_IRQHandler,
-    INTMUX0_6_IRQHandler,
-    INTMUX0_7_IRQHandler,
-    EWM_IRQHandler,
-    FTFE_Command_Complete_IRQHandler,
-    FTFE_Read_Collision_IRQHandler,
-    LLWU0_IRQHandler,
-    SPM_IRQHandler,
-    WDOG0_IRQHandler,
-    SCG_IRQHandler,
-    LPTMR0_IRQHandler,
-    LPTMR1_IRQHandler,
-    TPM1_IRQHandler,
-    TPM2_IRQHandler,
-    LPI2C2_IRQHandler,
-    LPSPI2_IRQHandler,
-    LPUART1_IRQHandler,
-    LPUART2_IRQHandler,
-    PORTB_IRQHandler,
-    PORTC_IRQHandler,
-    PORTD_IRQHandler,
-    CAU3_Task_Complete_IRQHandler,
-    CAU3_Security_Violation_IRQHandler,
-    TRNG_IRQHandler,
-    LPIT1_IRQHandler,
-    LPTMR2_IRQHandler,
-    TPM3_IRQHandler,
-    LPI2C3_IRQHandler,
-    LPSPI3_IRQHandler,
-    LPUART3_IRQHandler,
-    PORTE_IRQHandler,
-    LPCMP1_IRQHandler,
     RF0_0_IRQHandler,
     RF0_1_IRQHandler,
 };
@@ -365,6 +222,7 @@ static void DefaultIRQHandler(void)
    -- SystemInit()
    ---------------------------------------------------------------------------- */
 
+#ifdef OUTER_LATER
 void SystemInit (void) {
 #if (DISABLE_WDOG)
   WDOG0->CNT = 0xD928C520U;
@@ -393,6 +251,22 @@ void SystemInit (void) {
   EVENT_UNIT->INTPTSECURE = 0xFFFFFFFF;
 #endif
 }
+#endif //OUTER_LATER
+
+void _init(void)
+{
+    extern int main(int, char**);
+    const char *argv0 = "hello";
+    char *argv[] = {(char *)argv0, NULL, NULL};
+
+    copy_section(&__sdata_load, &__sdata_start, &__sdata_end);
+    copy_section(&__data_load, &__data_start, &__data_end);
+    zero_section(&__sbss_start, &__sbss_end);
+    zero_section(&__bss_start, &__bss_end);
+
+    main(1, argv);
+}
+
 
 /* ----------------------------------------------------------------------------
    -- SystemCoreClockUpdate()

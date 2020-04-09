@@ -1,228 +1,162 @@
-/* ------------------------------------------------------------------------- */
-/*  @file:    startup_RV32M1_ri5cy.s                                         */
-/*  @purpose: RI5CY Core Device Startup File                                 */
-/*            RV32M1_ri5cy                                                   */
-/*  @version: 1.0                                                            */
-/*  @date:    2018-10-2                                                      */
-/*  @build:   b180926                                                        */
-/* ------------------------------------------------------------------------- */
-/*                                                                           */
-/* Copyright 1997-2016 Freescale Semiconductor, Inc.                         */
-/* Copyright 2016-2018 NXP                                                   */
-/* All rights reserved.                                                      */
-/*                                                                           */
-/* SPDX-License-Identifier: BSD-3-Clause                                     */
+/*******************************************************************************
+ * (c) Copyright 2016-2018 Microsemi SoC Products Group.  All rights reserved.
+ *
+ * @file entry.S
+ * @author Microsemi SoC Products Group
+ * @brief Mi-V soft processor vectors, trap handling and startup code.
+ *
+ * SVN $Revision: 9947 $
+ * SVN $Date: 2018-04-30 20:28:49 +0530 (Mon, 30 Apr 2018) $
+ */
+#ifndef ENTRY_S
+#define ENTRY_S
 
+#include "encoding.h"
 
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
-.extern freertos_risc_v_trap_handler
-
-#define EXCEPTION_STACK_SIZE 0x58
-
-    .text
-    .section .vectors, "ax"
-    .option norvc;
-
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-    jal x0, freertos_risc_v_trap_handler
-
-    // reset vector
-    jal x0, Reset_Handler
-
-    // Illegal instrution exception
-    jal x0, IllegalInstruction_Handler
-
-    // ecall handler
-    jal x0, freertos_risc_v_trap_handler
-
-    // LSU error
-    jal x0, LSU_Handler
-
-    .section .startup
-
-/* Reset Handler */
-Reset_Handler:
-
-    # Disable global interrupt. */
-    csrci mstatus, 8
-
-    # initialize stack pointer
-    la sp, __StackTop
-
-    # initialize global pointer
-    la gp, __global_pointer
-
-#ifndef __NO_SYSTEM_INIT
-    jal SystemInit
+#if __riscv_xlen == 64
+# define LREG ld
+# define SREG sd
+# define REGBYTES 8
+#else
+# define LREG lw
+# define SREG sw
+# define REGBYTES 4
 #endif
 
-    call __libc_init_array
+  .section      .text.entry
+  .extern freertos_risc_v_trap_handler
+  .globl _start
 
-    # Enable global interrupt. */
-    csrsi mstatus, 8
+_start:
+  j handle_reset
 
-    jal main
-    ebreak
+nmi_vector:
+  j nmi_vector
 
-    .size Reset_Handler, . - Reset_Handler
+trap_vector:
+  j freertos_risc_v_trap_handler
 
-    .global _init
-    .global _fini
-_init:
-_fini:
-    ret
+handle_reset:
+  la t0, freertos_risc_v_trap_handler
+  csrw mtvec, t0
+  csrwi mstatus, 0
+  csrwi mie, 0
 
-  // saves all caller-saved registers (except return address)
-store_regs:
-    sw  x3, 0x00(x2)  // gp
-    sw  x4, 0x04(x2)  // tp
-    sw  x5, 0x08(x2)  // t0
-    sw  x6, 0x0c(x2)  // t1
-    sw  x7, 0x10(x2)  // t2
-    sw x10, 0x14(x2)  // a0
-    sw x11, 0x18(x2)  // a1
-    sw x12, 0x1c(x2)  // a2
-    sw x13, 0x20(x2)  // a3
-    sw x14, 0x24(x2)  // a4
-    sw x15, 0x28(x2)  // a5
-    sw x16, 0x2c(x2)  // a6
-    sw x17, 0x30(x2)  // a7
+/*Floating point support configuration*/
 
-    csrr a0, 0x7B0
-    csrr a1, 0x7B1
-    csrr a2, 0x7B2
-    sw a0, 0x34(x2)  // lpstart[0]
-    sw a1, 0x38(x2)  // lpend[0]
-    sw a2, 0x3c(x2)  // lpcount[0]
-    csrr a0, 0x7B4
-    csrr a1, 0x7B5
-    csrr a2, 0x7B6
-    sw a0, 0x40(x2)  // lpstart[1]
-    sw a1, 0x44(x2)  // lpend[1]
-    sw a2, 0x48(x2)  // lpcount[1]
+#ifdef __riscv_flen
+  csrr t0, mstatus
+  lui t1, 0xffffa
+  addi t1, t1, -1
+  and t0, t0, t1
+  lui t1, 0x4
+  or t1, t0, t1
+  csrw mstatus, t1
 
-    csrr a0, 0x341
-    sw a0, 0x4c(x2)  // mepc
-    csrr a1, 0x300
-    sw a1, 0x50(x2)  // mstatus
-    jalr x0, x1
+  lui t0, 0x0
+  fscsr t0
+#endif
+.option push
 
-    // load back registers from stack
-end_except:
-    lw a1, 0x50(x2)  // mstatus
-    csrrw x0, 0x300, a1
-    lw a0, 0x4c(x2)  // mepc
-    csrrw x0, 0x341, a0
+# Ensure the instruction is not optimized, since gp is not yet set
 
-    lw a0, 0x40(x2)  // lpstart[1]
-    lw a1, 0x44(x2)  // lpend[1]
-    lw a2, 0x48(x2)  // lpcount[1]
-    csrrw x0, 0x7B4, a0
-    csrrw x0, 0x7B5, a1
-    csrrw x0, 0x7B6, a2
-    lw a0, 0x34(x2)  // lpstart[0]
-    lw a1, 0x38(x2)  // lpend[0]
-    lw a2, 0x3c(x2)  // lpcount[0]
-    csrrw x0, 0x7B0, a0
-    csrrw x0, 0x7B1, a1
-    csrrw x0, 0x7B2, a2
+.option norelax
+  # initialize global pointer
+  la gp, __global_pointer$
 
-    lw  x3, 0x00(x2)  // gp
-    lw  x4, 0x04(x2)  // tp
-    lw  x5, 0x08(x2)  // t0
-    lw  x6, 0x0c(x2)  // t1
-    lw  x7, 0x10(x2)  // t2
-    lw x10, 0x14(x2)  // a0
-    lw x11, 0x18(x2)  // a1
-    lw x12, 0x1c(x2)  // a2
-    lw x13, 0x20(x2)  // a3
-    lw x14, 0x24(x2)  // a4
-    lw x15, 0x28(x2)  // a5
-    lw x16, 0x2c(x2)  // a6
-    lw x17, 0x30(x2)  // a7
+.option pop
 
-    lw  x1, 0x54(x2)
-    addi x2, x2, EXCEPTION_STACK_SIZE
-    mret
+  # initialize stack pointer
+  la sp, __stack_top
 
-    .weak IRQ_Handler
-    .type IRQ_Handler, %function
-IRQ_Handler:
-    addi x2, x2, -EXCEPTION_STACK_SIZE
-    sw x1, 0x54(x2)
-    jal x1, store_regs
-    la x1, end_except
-    csrr a0, mcause
-    jal x0, SystemIrqHandler
-    .size IRQ_Handler, . - IRQ_Handler
+  # perform the rest of initialization in C
+  j _init
 
-    .macro define_exception_entry entry_name handler_name
-    .weak \entry_name
-\entry_name:
-    addi x2, x2, -EXCEPTION_STACK_SIZE
-    sw x1, 0x54(x2)
-    jal x1, store_regs
-    la x1, end_except
-    jal x0, \handler_name
-    .endm
+#if 0
+trap_entry:
+  addi sp, sp, -32*REGBYTES
 
-define_exception_entry IllegalInstruction_Handler IllegalInstruction_HandlerFunc
-define_exception_entry Ecall_Handler Ecall_HandlerFunc
-define_exception_entry LSU_Handler LSU_HandlerFunc
+  SREG x1, 0 * REGBYTES(sp)
+  SREG x2, 1 * REGBYTES(sp)
+  SREG x3, 2 * REGBYTES(sp)
+  SREG x4, 3 * REGBYTES(sp)
+  SREG x5, 4 * REGBYTES(sp)
+  SREG x6, 5 * REGBYTES(sp)
+  SREG x7, 6 * REGBYTES(sp)
+  SREG x8, 7 * REGBYTES(sp)
+  SREG x9, 8 * REGBYTES(sp)
+  SREG x10, 9 * REGBYTES(sp)
+  SREG x11, 10 * REGBYTES(sp)
+  SREG x12, 11 * REGBYTES(sp)
+  SREG x13, 12 * REGBYTES(sp)
+  SREG x14, 13 * REGBYTES(sp)
+  SREG x15, 14 * REGBYTES(sp)
+  SREG x16, 15 * REGBYTES(sp)
+  SREG x17, 16 * REGBYTES(sp)
+  SREG x18, 17 * REGBYTES(sp)
+  SREG x19, 18 * REGBYTES(sp)
+  SREG x20, 19 * REGBYTES(sp)
+  SREG x21, 20 * REGBYTES(sp)
+  SREG x22, 21 * REGBYTES(sp)
+  SREG x23, 22 * REGBYTES(sp)
+  SREG x24, 23 * REGBYTES(sp)
+  SREG x25, 24 * REGBYTES(sp)
+  SREG x26, 25 * REGBYTES(sp)
+  SREG x27, 26 * REGBYTES(sp)
+  SREG x28, 27 * REGBYTES(sp)
+  SREG x29, 28 * REGBYTES(sp)
+  SREG x30, 29 * REGBYTES(sp)
+  SREG x31, 30 * REGBYTES(sp)
 
-    .weak IllegalInstruction_HandlerFunc
-    .type IllegalInstruction_HandlerFunc, %function
-IllegalInstruction_HandlerFunc:
-    j .
-    .size IllegalInstruction_HandlerFunc, . - IllegalInstruction_HandlerFunc
 
-    .weak Ecall_HandlerFunc
-    .type Ecall_HandlerFunc, %function
-Ecall_HandlerFunc:
-    j .
-    .size Ecall_HandlerFunc, . - Ecall_HandlerFunc
+  csrr t0, mepc
+  SREG t0, 31 * REGBYTES(sp)
 
-    .weak LSU_HandlerFunc
-    .type LSU_HandlerFunc, %function
-LSU_HandlerFunc:
-    j .
-    .size LSU_HandlerFunc, . - LSU_HandlerFunc
+  csrr a0, mcause
+  csrr a1, mepc
+  mv a2, sp
+  jal handle_trap
+  csrw mepc, a0
+
+  # Remain in M-mode after mret
+  li t0, MSTATUS_MPP
+  csrs mstatus, t0
+
+  LREG x1, 0 * REGBYTES(sp)
+  LREG x2, 1 * REGBYTES(sp)
+  LREG x3, 2 * REGBYTES(sp)
+  LREG x4, 3 * REGBYTES(sp)
+  LREG x5, 4 * REGBYTES(sp)
+  LREG x6, 5 * REGBYTES(sp)
+  LREG x7, 6 * REGBYTES(sp)
+  LREG x8, 7 * REGBYTES(sp)
+  LREG x9, 8 * REGBYTES(sp)
+  LREG x10, 9 * REGBYTES(sp)
+  LREG x11, 10 * REGBYTES(sp)
+  LREG x12, 11 * REGBYTES(sp)
+  LREG x13, 12 * REGBYTES(sp)
+  LREG x14, 13 * REGBYTES(sp)
+  LREG x15, 14 * REGBYTES(sp)
+  LREG x16, 15 * REGBYTES(sp)
+  LREG x17, 16 * REGBYTES(sp)
+  LREG x18, 17 * REGBYTES(sp)
+  LREG x19, 18 * REGBYTES(sp)
+  LREG x20, 19 * REGBYTES(sp)
+  LREG x21, 20 * REGBYTES(sp)
+  LREG x22, 21 * REGBYTES(sp)
+  LREG x23, 22 * REGBYTES(sp)
+  LREG x24, 23 * REGBYTES(sp)
+  LREG x25, 24 * REGBYTES(sp)
+  LREG x26, 25 * REGBYTES(sp)
+  LREG x27, 26 * REGBYTES(sp)
+  LREG x28, 27 * REGBYTES(sp)
+  LREG x29, 28 * REGBYTES(sp)
+  LREG x30, 29 * REGBYTES(sp)
+  LREG x31, 30 * REGBYTES(sp)
+
+  addi sp, sp, 32*REGBYTES
+  mret
+#endif /* 0 */
+
+#endif
+
