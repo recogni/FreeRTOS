@@ -51,104 +51,11 @@
 
 typedef void (*irq_handler_t)(void);
 
-#ifdef LATER
-extern void DMA0_0_4_8_12_DriverIRQHandler(void);
-extern void DMA0_1_5_9_13_DriverIRQHandler(void);
-extern void DMA0_2_6_10_14_DriverIRQHandler(void);
-extern void DMA0_3_7_11_15_DriverIRQHandler(void);
-extern void DMA0_Error_IRQHandler(void);
-extern void CMC0_IRQHandler(void);
-extern void EWM_IRQHandler(void);
-extern void FTFE_Command_Complete_IRQHandler(void);
-extern void FTFE_Read_Collision_IRQHandler(void);
-extern void LLWU0_IRQHandler(void);
-extern void MUA_IRQHandler(void);
-extern void SPM_IRQHandler(void);
-extern void WDOG0_IRQHandler(void);
-extern void SCG_IRQHandler(void);
-extern void LPIT0_IRQHandler(void);
-extern void RTC_IRQHandler(void);
-extern void LPTMR0_IRQHandler(void);
-extern void LPTMR1_IRQHandler(void);
-extern void TPM0_IRQHandler(void);
-extern void TPM1_IRQHandler(void);
-extern void TPM2_IRQHandler(void);
-extern void EMVSIM0_IRQHandler(void);
-extern void FLEXIO0_DriverIRQHandler(void);
-extern void LPI2C0_DriverIRQHandler(void);
-extern void LPI2C1_DriverIRQHandler(void);
-extern void LPI2C2_DriverIRQHandler(void);
-extern void I2S0_DriverIRQHandler(void);
-extern void USDHC0_DriverIRQHandler(void);
-extern void LPSPI0_DriverIRQHandler(void);
-extern void LPSPI1_DriverIRQHandler(void);
-extern void LPSPI2_DriverIRQHandler(void);
-extern void LPUART0_DriverIRQHandler(void);
-extern void LPUART1_DriverIRQHandler(void);
-extern void LPUART2_DriverIRQHandler(void);
-extern void USB0_IRQHandler(void);
-extern void PORTA_IRQHandler(void);
-extern void PORTB_IRQHandler(void);
-extern void PORTC_IRQHandler(void);
-extern void PORTD_IRQHandler(void);
-extern void ADC0_IRQHandler(void);
-extern void LPCMP0_IRQHandler(void);
-extern void LPDAC0_IRQHandler(void);
-extern void CAU3_Task_Complete_IRQHandler(void);
-extern void CAU3_Security_Violation_IRQHandler(void);
-extern void TRNG_IRQHandler(void);
-extern void LPIT1_IRQHandler(void);
-extern void LPTMR2_IRQHandler(void);
-extern void TPM3_IRQHandler(void);
-extern void LPI2C3_DriverIRQHandler(void);
-extern void LPSPI3_DriverIRQHandler(void);
-extern void LPUART3_DriverIRQHandler(void);
-extern void PORTE_IRQHandler(void);
-extern void LPCMP1_IRQHandler(void);
-extern void RF0_0_IRQHandler(void);
-extern void RF0_1_IRQHandler(void);
-extern void INTMUX0_0_DriverIRQHandler(void);
-extern void INTMUX0_1_DriverIRQHandler(void);
-extern void INTMUX0_2_DriverIRQHandler(void);
-extern void INTMUX0_3_DriverIRQHandler(void);
-extern void INTMUX0_4_DriverIRQHandler(void);
-extern void INTMUX0_5_DriverIRQHandler(void);
-extern void INTMUX0_6_DriverIRQHandler(void);
-extern void INTMUX0_7_DriverIRQHandler(void);
-extern void INTMUX0_8_DriverIRQHandler(void);
-extern void DMA0_0_4_8_12_IRQHandler(void);
-extern void DMA0_1_5_9_13_IRQHandler(void);
-extern void DMA0_2_6_10_14_IRQHandler(void);
-extern void DMA0_3_7_11_15_IRQHandler(void);
-extern void FLEXIO0_IRQHandler(void);
-extern void LPI2C0_IRQHandler(void);
-extern void LPI2C1_IRQHandler(void);
-extern void LPI2C2_IRQHandler(void);
-extern void I2S0_IRQHandler(void);
-extern void USDHC0_IRQHandler(void);
-extern void LPSPI0_IRQHandler(void);
-extern void LPSPI1_IRQHandler(void);
-extern void LPSPI2_IRQHandler(void);
-extern void LPUART0_IRQHandler(void);
-extern void LPUART1_IRQHandler(void);
-extern void LPUART2_IRQHandler(void);
-extern void LPI2C3_IRQHandler(void);
-extern void LPSPI3_IRQHandler(void);
-extern void LPUART3_IRQHandler(void);
-extern void INTMUX0_0_IRQHandler(void);
-extern void INTMUX0_1_IRQHandler(void);
-extern void INTMUX0_2_IRQHandler(void);
-extern void INTMUX0_3_IRQHandler(void);
-extern void INTMUX0_4_IRQHandler(void);
-extern void INTMUX0_5_IRQHandler(void);
-extern void INTMUX0_6_IRQHandler(void);
-extern void INTMUX0_7_IRQHandler(void);
-#endif
-
 /* ----------------------------------------------------------------------------
    -- Core clock
    ---------------------------------------------------------------------------- */
 uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
+uint32_t foo = 0x33;
 
 extern uint32_t __etext;
 extern uint32_t __data_load;
@@ -259,10 +166,15 @@ void _init(void)
     const char *argv0 = "hello";
     char *argv[] = {(char *)argv0, NULL, NULL};
 
+    foo = 0x55;
     copy_section(&__sdata_load, &__sdata_start, &__sdata_end);
+    foo = 0x66;
     copy_section(&__data_load, &__data_start, &__data_end);
+    foo = 0x77;
     zero_section(&__sbss_start, &__sbss_end);
+    foo = 0x88;
     zero_section(&__bss_start, &__bss_end);
+    foo = 0x99;
 
     main(1, argv);
 }
