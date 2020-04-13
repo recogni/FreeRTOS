@@ -89,6 +89,9 @@ it at any time, and even with a queue length of 1, the sending task will never
 find the queue full. */
 #define mainQUEUE_LENGTH					( 1 )
 
+/* API for simple UART debug output */
+void dbg_puts(const char *msg);
+void dbg_uart_init(void);
 /*-----------------------------------------------------------*/
 
 /*
@@ -112,13 +115,19 @@ static QueueHandle_t xQueue = NULL;
 
 void main_blinky( void )
 {
+
+    dbg_uart_init();
+    dbg_puts("Hello From FreeRTOS\n");
+    //puts("Hello\n");
 	/* Create the queue. */
+    dbg_puts("XQueueCreate\n");
 	xQueue = xQueueCreate( mainQUEUE_LENGTH, sizeof( uint32_t ) );
 
 	if( xQueue != NULL )
 	{
 		/* Start the two tasks as described in the comments at the top of this
 		file. */
+        dbg_puts("Create prvQueueReceiveTask\n");
 		xTaskCreate( prvQueueReceiveTask,				/* The function that implements the task. */
 					"Rx", 								/* The text name assigned to the task - for debug only as it is not used by the kernel. */
 					configMINIMAL_STACK_SIZE * 2U, 		/* The size of the stack to allocate to the task. */
@@ -126,9 +135,11 @@ void main_blinky( void )
 					mainQUEUE_RECEIVE_TASK_PRIORITY, 	/* The priority assigned to the task. */
 					NULL );								/* The task handle is not required, so NULL is passed. */
 
+        dbg_puts("Create prvQueueSendTask\n");
 		xTaskCreate( prvQueueSendTask, "TX", configMINIMAL_STACK_SIZE * 2U, NULL, mainQUEUE_SEND_TASK_PRIORITY, NULL );
 
 		/* Start the tasks and timer running. */
+        dbg_puts("StartScheduler\n");
 		vTaskStartScheduler();
 	}
 
@@ -151,11 +162,13 @@ BaseType_t xReturned;
 	/* Remove compiler warning about unused parameter. */
 	( void ) pvParameters;
 
+    dbg_puts("Enter SendTask\n");
 	/* Initialise xNextWakeTime - this only needs to be done once. */
 	xNextWakeTime = xTaskGetTickCount();
 
 	for( ;; )
 	{
+        dbg_puts("SendTask Loop\n");
 		/* Place this task in the blocked state until it is time to run again. */
 		vTaskDelayUntil( &xNextWakeTime, mainQUEUE_SEND_FREQUENCY_MS );
 
@@ -180,9 +193,11 @@ extern void vToggleLED( void );
 
 	/* Remove compiler warning about unused parameter. */
 	( void ) pvParameters;
+    dbg_puts("Enter SendTask\n");
 
 	for( ;; )
 	{
+        dbg_puts("SendTask Loop\n");
 		/* Wait until something arrives in the queue - this task will block
 		indefinitely provided INCLUDE_vTaskSuspend is set to 1 in
 		FreeRTOSConfig.h. */
@@ -203,4 +218,66 @@ extern void vToggleLED( void );
 	}
 }
 /*-----------------------------------------------------------*/
+
+
+/*
+ * Simple 16550 UART output driver.
+ */
+#define UART_BASE 0x10000000
+#define N_UART_REG_QUEUE     UART_BASE + (0*4)    // rx/tx fifo data
+#define N_UART_REG_DLL       UART_BASE + (0*4)    // divisor latch (LSB)
+#define N_UART_REG_IER       UART_BASE + (1*4)    // interrupt enable register
+#define N_UART_REG_DLM       UART_BASE + (1*4)    // divisor latch (MSB)
+#define N_UART_REG_FCR       UART_BASE + (2*4)    // fifo control register
+#define N_UART_REG_LCR       UART_BASE + (3*4)    // line control register
+#define N_UART_REG_MCR       UART_BASE + (4*4)    // modem control register
+#define N_UART_REG_LSR       UART_BASE + (5*4)    // line status register
+#define N_UART_REG_MSR       UART_BASE + (6*4)    // modem status register
+#define N_UART_REG_SCR       UART_BASE + (7*4)    // scratch register
+
+#define UART_DEFAULT_BAUD	115200
+#define UART_REG_STATUS_RX 0x01     /* Data is ready */
+#define UART_REG_STATUS_TX 0x20     /* THR is empty and can accept data */
+
+static void write_reg_u8(uintptr_t addr, uint8_t value)
+{
+    volatile uint8_t *loc_addr = (volatile uint8_t *)addr;
+    *loc_addr = value;
+}
+
+static uint8_t read_reg_u8(uintptr_t addr)
+{
+    return *(volatile uint8_t *)addr;
+}
+
+static void dbg_serial_putc(const char c)
+{
+  if (c == '\n')
+      dbg_serial_putc('\r');
+
+  while ((read_reg_u8(N_UART_REG_LSR) & UART_REG_STATUS_TX) == 0) {
+  }
+  write_reg_u8(N_UART_REG_QUEUE, c);
+}
+
+void dbg_puts(const char *msg)
+{
+    while (*msg) {
+        dbg_serial_putc(*msg++);
+    }
+}
+
+void dbg_uart_init(void)
+{
+  static uint32_t uart16550_clock = 50000000;
+  uint32_t divisor = uart16550_clock / (16 * UART_DEFAULT_BAUD);
+
+  write_reg_u8(N_UART_REG_IER , 0x00);                // Disable all interrupts
+  write_reg_u8(N_UART_REG_LCR , 0x80);                // Enable DLAB (set baud rate divisor)
+  write_reg_u8(N_UART_REG_DLL , (uint8_t)divisor);    // Set divisor (lo byte)
+  write_reg_u8(N_UART_REG_DLM , (uint8_t)(divisor >> 8));     //     (hi byte)
+  write_reg_u8(N_UART_REG_LCR , 0x03);                // 8 bits, no parity, one stop bit
+  write_reg_u8(N_UART_REG_FCR , 0x06);                // Enable FIFO, clear them, with 14-byte threshold
+  write_reg_u8(N_UART_REG_MCR , 0x2);                // Enable RTS
+}
 
