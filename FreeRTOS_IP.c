@@ -54,6 +54,7 @@ a constant. */
 #define ipEXPECTED_ARPHeader_t_SIZE			( ( size_t ) 28 )
 #define ipEXPECTED_IPHeader_t_SIZE			( ( size_t ) 20 )
 #define ipEXPECTED_IGMPHeader__SIZE			( ( size_t ) 8 )
+#define ipEXPECTED_PTPHeader__SIZE			( ( size_t ) 34 )
 #define ipEXPECTED_ICMPHeader_t_SIZE		( ( size_t ) 8 )
 #define ipEXPECTED_UDPHeader_t_SIZE			( ( size_t ) 8 )
 #define ipEXPECTED_TCPHeader_t_SIZE			( ( size_t ) 20 )
@@ -255,6 +256,9 @@ uint16_t usPacketIdentifier = 0U;
 /* For convenience, a MAC address of all 0xffs is defined const for quick
 reference. */
 const MACAddress_t xBroadcastMACAddress = { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } };
+
+/* PTP Multicast group address */
+const MACAddress_t xPTPMACAddress = { { 0x1, 0x1b, 0x19, 0x00, 0x00, 0x00 } };
 
 /* Structure that stores the netmask, gateway address and DNS server addresses. */
 NetworkAddressingParameters_t xNetworkAddressing = { 0, 0, 0, 0, 0 };
@@ -1243,6 +1247,11 @@ const EthernetHeader_t *pxEthernetHeader;
 		/* The packet was a broadcast - process it. */
 		eReturn = eProcessBuffer;
 	}
+	else if( memcmp( ( void * ) xPTPMACAddress.ucBytes, ( void * ) pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
+	{
+		/* PTP Packet */
+		eReturn = eProcessBuffer;
+	}
 	else
 #if( ipconfigUSE_LLMNR == 1 )
 	if( memcmp( ( void * ) xLLMNR_MacAdress.ucBytes, ( void * ) pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
@@ -1377,6 +1386,20 @@ eFrameProcessingResult_t eReturned = eReleaseBuffer;
 			/* Interpret the received Ethernet packet. */
 			switch( pxEthernetHeader->usFrameType )
 			{
+			case ipPTP_FRAME_TYPE:
+				/* The Ethernet frame contains an PTP packet. */
+				if( pxNetworkBuffer->xDataLength >=
+                    (ipEXPECTED_EthernetHeader_t_SIZE + ipEXPECTED_PTPHeader__SIZE))
+				{
+					eReturned = ePTPProcessPacket( pxNetworkBuffer->pucEthernetBuffer );
+				}
+				else
+				{
+                    printf("PTP Packet too small, %d\n", pxNetworkBuffer->xDataLength);
+					eReturned = eReleaseBuffer;
+				}
+				break;
+
 			case ipARP_FRAME_TYPE:
 				/* The Ethernet frame contains an ARP packet. */
 				if( pxNetworkBuffer->xDataLength >= sizeof( ARPPacket_t ) )
@@ -1402,6 +1425,7 @@ eFrameProcessingResult_t eReturned = eReleaseBuffer;
 				break;
 
 			default:
+                printf("%s: unhandled ethertype 0x%x\n", __FUNCTION__, pxEthernetHeader->usFrameType);
 				/* No other packet types are handled.  Nothing to do. */
 				eReturned = eReleaseBuffer;
 				break;

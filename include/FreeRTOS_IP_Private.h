@@ -296,6 +296,7 @@ typedef struct xUDP_IP_FRAGMENT_PARAMETERS IPFragmentParameters_t;
 #if( ipconfigBYTE_ORDER == pdFREERTOS_LITTLE_ENDIAN )
 
 	/* Ethernet frame types. */
+	#define ipPTP_FRAME_TYPE	( 0xf788U )
 	#define ipARP_FRAME_TYPE	( 0x0608U )
 	#define ipIPv4_FRAME_TYPE	( 0x0008U )
 
@@ -308,6 +309,7 @@ typedef struct xUDP_IP_FRAGMENT_PARAMETERS IPFragmentParameters_t;
 #else
 
 	/* Ethernet frame types. */
+	#define ipPTP_FRAME_TYPE	( 0x88F7U )
 	#define ipARP_FRAME_TYPE	( 0x0806U )
 	#define ipIPv4_FRAME_TYPE	( 0x0800U )
 
