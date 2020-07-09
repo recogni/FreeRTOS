@@ -1247,7 +1247,7 @@ const EthernetHeader_t *pxEthernetHeader;
 		/* The packet was a broadcast - process it. */
 		eReturn = eProcessBuffer;
 	}
-	else if( memcmp( ( void * ) xPTPMACAddress.ucBytes, ( void * ) pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
+	else if( keep_ptp && memcmp( ( void * ) xPTPMACAddress.ucBytes, ( void * ) pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
 	{
 		/* PTP Packet */
 		eReturn = eProcessBuffer;
