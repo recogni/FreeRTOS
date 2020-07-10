@@ -1389,13 +1389,13 @@ eFrameProcessingResult_t eReturned = eReleaseBuffer;
 			case ipPTP_FRAME_TYPE:
 				/* The Ethernet frame contains an PTP packet. */
 				if( pxNetworkBuffer->xDataLength >=
-                    (ipEXPECTED_EthernetHeader_t_SIZE + ipEXPECTED_PTPHeader__SIZE))
+					(ipEXPECTED_EthernetHeader_t_SIZE + ipEXPECTED_PTPHeader__SIZE))
 				{
 					eReturned = ePTPProcessPacket( pxNetworkBuffer->pucEthernetBuffer );
 				}
 				else
 				{
-                    printf("PTP Packet too small, %d\n", pxNetworkBuffer->xDataLength);
+					printf("PTP Packet too small, %d\n", pxNetworkBuffer->xDataLength);
 					eReturned = eReleaseBuffer;
 				}
 				break;
@@ -1425,7 +1425,7 @@ eFrameProcessingResult_t eReturned = eReleaseBuffer;
 				break;
 
 			default:
-                printf("%s: unhandled ethertype 0x%x\n", __FUNCTION__, pxEthernetHeader->usFrameType);
+				printf("%s: unhandled ethertype 0x%x\n", __FUNCTION__, pxEthernetHeader->usFrameType);
 				/* No other packet types are handled.  Nothing to do. */
 				eReturned = eReleaseBuffer;
 				break;
