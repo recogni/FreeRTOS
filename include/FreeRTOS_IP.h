@@ -246,6 +246,7 @@ uint32_t FreeRTOS_GetDNSServerAddress( void );
 uint32_t FreeRTOS_GetNetmask( void );
 void FreeRTOS_OutputARPRequest( uint32_t ulIPAddress );
 BaseType_t FreeRTOS_IsNetworkUp( void );
+BaseType_t FreeRTOS_Queue_Raw(char *buffer, uint16_t len);
 
 #if( ipconfigCHECK_IP_QUEUE_SPACE != 0 )
 	UBaseType_t uxGetMinimumIPQueueSpace( void );

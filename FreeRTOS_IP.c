@@ -1088,6 +1088,33 @@ void FreeRTOS_SetAddressConfiguration( const uint32_t *pulIPAddress, const uint3
 }
 /*-----------------------------------------------------------*/
 
+/* Enqueues a fully formed packet onto tx queue. No processing is done
+ * on buffer contents so it must be complete including:
+ * Eth header: Src MAC, Dest MAC, Ethertype.
+ * Packet data according to ethtype, IP, ARP, PTP, etc.
+ *
+ * All fields need to in proper endieness for layer2 vs layer3.
+ */
+BaseType_t FreeRTOS_Queue_Raw(char *buffer, uint16_t len)
+{
+	NetworkBufferDescriptor_t *pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( len, ( TickType_t ) 0 );
+	if( pxNetworkBuffer != NULL ) {
+
+		IPStackEvent_t xSendEvent;
+		pxNetworkBuffer->xDataLength = len;
+		memcpy( ( void * ) pxNetworkBuffer->pucEthernetBuffer, ( void * ) buffer, len );
+
+		xSendEvent.eEventType = eNetworkTxEvent;
+		xSendEvent.pvData = ( void * ) pxNetworkBuffer;
+		if( xSendEventStructToIPTask( &xSendEvent, ( TickType_t ) portMAX_DELAY ) == pdFAIL ) {
+			vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+			printf("SendToIP FAILED!\n");
+		}
+	}
+}
+
+/*-----------------------------------------------------------*/
+
 #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
 
 	BaseType_t FreeRTOS_SendPingRequest( uint32_t ulIPAddress, size_t xNumberOfBytesToSend, TickType_t xBlockTimeTicks )
