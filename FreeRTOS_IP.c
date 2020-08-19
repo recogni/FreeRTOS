@@ -917,7 +917,7 @@ NetworkBufferDescriptor_t *pxResult;
 
 		/* Here a pointer was placed to the network descriptor,
 		As a pointer is dereferenced, make sure it is well aligned */
-		if( ( ( ( uint32_t ) pucBuffer ) & ( sizeof( pucBuffer ) - 1 ) ) == 0 )
+		if( ( ( ( uint64_t ) pucBuffer ) & ( sizeof( pucBuffer ) - 1 ) ) == 0 )
 		{
 			/* The following statement may trigger a:
 			warning: cast increases required alignment of target type [-Wcast-align].
@@ -1903,6 +1903,8 @@ uint8_t ucProtocol;
 	of this calculation. */
 	pxProtPack = ( ProtocolPacket_t * ) ( pucEthernetBuffer + ( uxIPHeaderLength - ipSIZE_OF_IPv4_HEADER ) );
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 	/* Switch on the Layer 3/4 protocol. */
 	if( ucProtocol == ( uint8_t ) ipPROTOCOL_UDP )
 	{
@@ -1911,6 +1913,7 @@ uint8_t ucProtocol;
 			return ipINVALID_LENGTH;
 		}
 
+        /* -Waddress-of-packed-member warning supressed */
 		pusChecksum = ( uint16_t * ) ( &( pxProtPack->xUDPPacket.xUDPHeader.usChecksum ) );
 		#if( ipconfigHAS_DEBUG_PRINTF != 0 )
 		{
@@ -1925,6 +1928,7 @@ uint8_t ucProtocol;
 			return ipINVALID_LENGTH;
 		}
 
+        /* -Waddress-of-packed-member warning supressed */
 		pusChecksum = ( uint16_t * ) ( &( pxProtPack->xTCPPacket.xTCPHeader.usChecksum ) );
 		#if( ipconfigHAS_DEBUG_PRINTF != 0 )
 		{
@@ -1940,6 +1944,7 @@ uint8_t ucProtocol;
 			return ipINVALID_LENGTH;
 		}
 
+        /* -Waddress-of-packed-member warning supressed */
 		pusChecksum = ( uint16_t * ) ( &( pxProtPack->xICMPPacket.xICMPHeader.usChecksum ) );
 		#if( ipconfigHAS_DEBUG_PRINTF != 0 )
 		{
@@ -1959,6 +1964,7 @@ uint8_t ucProtocol;
 		/* Unhandled protocol, other than ICMP, IGMP, UDP, or TCP. */
 		return ipUNHANDLED_PROTOCOL;
 	}
+#pragma GCC diagnostic pop
 
 	/* The protocol and checksum field have been identified. Check the direction
 	of the packet. */
@@ -2099,7 +2105,8 @@ uint16_t usGenerateChecksum( uint32_t ulSum, const uint8_t * pucNextData, size_t
 xUnion32 xSum2, xSum, xTerm;
 xUnionPtr xSource;		/* Points to first byte */
 xUnionPtr xLastSource;	/* Points to last byte plus one */
-uint32_t ulAlignBits, ulCarry = 0ul;
+uint64_t ulAlignBits;
+uint32_t ulCarry = 0ul;
 
 	/* Small MCUs often spend up to 30% of the time doing checksum calculations
 	This function is optimised for 32-bit CPUs; Each time it will try to fetch
@@ -2110,7 +2117,7 @@ uint32_t ulAlignBits, ulCarry = 0ul;
 	xTerm.u32 = 0ul;
 
 	xSource.u8ptr = ( uint8_t * ) pucNextData;
-	ulAlignBits = ( ( ( uint32_t ) pucNextData ) & 0x03u ); /* gives 0, 1, 2, or 3 */
+	ulAlignBits = ( ( ( uint64_t ) pucNextData ) & 0x03u ); /* gives 0, 1, 2, or 3 */
 
 	/* If byte (8-bit) aligned... */
 	if( ( ( ulAlignBits & 1ul ) != 0ul ) && ( uxDataLengthBytes >= ( size_t ) 1 ) )
