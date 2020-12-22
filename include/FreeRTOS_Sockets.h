@@ -298,6 +298,7 @@ uint8_t *FreeRTOS_get_tx_head( Socket_t xSocket, BaseType_t *pxLength );
 
 #endif /* ipconfigUSE_TCP */
 
+
 /*
  * Connect / disconnect handler for a TCP socket
  * For example:
@@ -382,21 +383,125 @@ void FreeRTOS_netstat( void );
 
 #endif /* ipconfigSUPPORT_SELECT_FUNCTION */
 
+#ifdef GRPC_COMPAT
+struct sockaddr
+{
+	/* _HT_ On 32- and 64-bit architectures, the addition of the two uint8_t
+	fields doesn't make the structure bigger, due to alignment.
+	The fields are inserted as a preparation for IPv6. */
+
+	/* sin_len and sin_family not used in the IPv4-only release. */
+	uint8_t sin_len;		/* length of this structure. */
+	uint8_t sa_family;		/* FREERTOS_AF_INET. */
+	uint16_t sin_port;
+	uint32_t sin_addr;
+};
+
+struct in_addr {
+    uint32_t s_addr; // that's a 32-bit int (4 bytes)
+};
+struct sockaddr_in {
+    short int          sin_family;  // Address family, AF_INET
+    unsigned short int sin_port;    // Port number
+    struct in_addr     sin_addr;    // Internet address
+    unsigned char      sin_zero[8]; // Same size as struct sockaddr
+};
+
+#define AF_INET     FREERTOS_AF_INET
+#define AF_INET6    FREERTOS_AF_INET6
+#define AF_UNSPEC   0
+#define SOCK_DGRAM  FREERTOS_SOCK_DGRAM
+#define IPPROTO_UDP FREERTOS_IPPROTO_UDP
+
+struct hostent
+{
+  char *h_name;         /* Official name of host.  */
+  char **h_aliases;     /* Alias list.  */
+  int h_addrtype;       /* Host address type.  */
+  int h_length;         /* Length of address.  */
+  char **h_addr_list;   /* List of addresses from name server.  */
+#define h_addr h_addr_list[0]
+};
+
+#define fprintf(_fd, ...)   printf(__VA_ARGS__)
+//#define TM_PRINTF(f_, ...) printf((f_), __VA_ARGS__)
+int getsockname(int s, struct sockaddr *name, socklen_t *namelen);
+int close(int fd);
+
+
+//XXX HACK BRETT
+//For now just to compile, blindly use unused fd.
+//These need to get fixed up to some how map fds to something....
+//
+#define socket(domain, type, proto)                         FreeRTOS_socket( 0, 0, 0 );
+#define send(s,data,len,x)                                  FreeRTOS_send(NULL, data, len, 0)
+#define recvfrom(s, data, data_len, flags, from, from_len)  FreeRTOS_recvfrom(NULL, data, data_len, flags, NULL, from_len)
+#define recv(s, data, data_len, flags)                      FreeRTOS_recv(NULL, data, data_len, flags)
+#define setsockopt(s, level, option, val, len)              FreeRTOS_setsockopt(NULL, 0, option, val, 0)  //level & val unused in FreeRTOS
+#define bind(s, addr, len)                                  FreeRTOS_bind(NULL, (struct freertos_sockaddr *)addr, len)
+#define connect(sockfd, addr, len)                          FreeRTOS_connect( NULL, NULL, 0)
+#define inet_addr(Address)                                  FreeRTOS_inet_addr(Address)
+#define select(nfds, rfds, wfds, exceptfds, time)           FreeRTOS_select(NULL, 0 )
+
+#define FREERTOS_SO_RCVTIMEO			( 0 )		/* Used to set the receive time out. */
+#define FREERTOS_SO_SNDTIMEO			( 1 )		/* Used to set the send time out. */
+
+#define SO_NONBLOCK FREERTOS_SO_RCVTIMEO  //we wll also have to translate the val...
+#define SO_SNDBUF   FREERTOS_SO_SNDBUF
+#define SO_RCVBUF   FREERTOS_SO_RCVBUF
+#define SOCK_STREAM FREERTOS_SOCK_STREAM
+
+#define EWOULDBLOCK FREERTOS_EWOULDBLOCK
+#define EINPROGRESS -29  //XXX 
+#define EAFNOSUPPORT FREERTOS_EINVAL
+
+typedef SocketSet_t fd_set;
+/*
+ * Map standard linux FD_* macros to FreeRTOS
+ */
+#define FD_SET(fd, sockset)   FreeRTOS_FD_SET( NULL, NULL, 0 )
+#define FD_ZERO(sockset)      FreeRTOS_FD_CLR(NULL, NULL, 0)
+#define FD_ISSET(fd, sockset) FreeRTOS_FD_ISSET(NULL, 0 )
+#define FD_CLR(fd, sockset)   FreeRTOS_FD_CLR(NULL, NULL, 0)
+
+#define ntohl(x) FreeRTOS_ntohl( x )
+#define ntohs(x) FreeRTOS_ntohs( x )
+#define htons(x) FreeRTOS_htons(x)
+#define htonl(x) FreeRTOS_htonl(x)
+
+//From FreeRTOS-Plus-TCP/portable/NetworkInterface/mw300_rd/NetworkInterface.c
+#define IPADDR_NONE         ((uint32_t)0xffffffffUL) /** 255.255.255.255 */
+#define IPADDR_LOOPBACK     ((uint32_t)0x7f000001UL) /** 127.0.0.1 */
+#define IPADDR_ANY          ((uint32_t)0x00000000UL) /** 0.0.0.0 */
+#define IPADDR_BROADCAST    ((uint32_t)0xffffffffUL) /** 255.255.255.255 */
+
+#define INADDR_NONE         IPADDR_NONE         /** 255.255.255.255 */
+#define INADDR_LOOPBACK     IPADDR_LOOPBACK     /** 127.0.0.1 */
+#define INADDR_ANY          IPADDR_ANY          /** 0.0.0.0 */
+#define INADDR_BROADCAST    IPADDR_BROADCAST    /** 255.255.255.255 */
+
+//From lwip lwip_ip_addr.h
+#define IN_CLASSA(a)            ((((uint32_t)(a)) & 0x80000000) == 0)
+#define IN_CLASSA_NET           0xff000000
+#define IN_CLASSA_NSHIFT        24
+#define IN_CLASSA_HOST          (0xffffffff & ~IN_CLASSA_NET)
+#define IN_CLASSA_MAX           128
+
+#define IN_CLASSB(a)            ((((uint32_t)(a)) & 0xc0000000) == 0x80000000)
+#define IN_CLASSB_NET           0xffff0000
+#define IN_CLASSB_NSHIFT        16
+#define IN_CLASSB_HOST          (0xffffffff & ~IN_CLASSB_NET)
+#define IN_CLASSB_MAX           65536
+
+#define IN_CLASSC(a)            ((((uint32_t)(a)) & 0xe0000000) == 0xc0000000)
+#define IN_CLASSC_NET           0xffffff00
+#define IN_CLASSC_NSHIFT        8
+#define IN_CLASSC_HOST          (0xffffffff & ~IN_CLASSC_NET)
+
+#endif //GRPC_COMPAT
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
 #endif /* FREERTOS_SOCKETS_H */
-
-
-
-
-
-
-
-
-
-
-
-
-
